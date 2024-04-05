@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Price Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var chart = null;
+        var fetchInterval = null;
+
+        function fetchAndUpdateStockData() {
+            fetch('/stock-data')
+                .then(response => response.json())
+                .then(data => {
+                    const labels = [];
+                    const prices = [];
+                    const symbol = Object.keys(data)[0]; // Assumes first symbol; adjust as needed
+
+                    for (const entry of data[symbol]) {
+                        labels.push(new Date(entry.date).toLocaleTimeString());
+                        prices.push(entry.price);
+                    }
+                    
+                    if (chart) {
+                        chart.data.labels = labels;
+                        chart.data.datasets[0].data = prices;
+                        chart.update();
+                    } else {
+                        chart = new Chart(document.getElementById('stockChart'), {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: `${symbol} Stock Price`,
+                                    data: prices,
+                                    borderColor: 'rgb(75, 192, 192)',
+                                    tension: 0.1
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    x: {
+                                        type: 'time',
+                                        time: {
+                                            unit: 'minute'
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching stock data:', error));
+        }
+
+        function startFetchingData() {
+            if (!fetchInterval) {
+                fetchAndUpdateStockData(); // Initial fetch
+                fetchInterval = setInterval(fetchAndUpdateStockData, 5000);
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Real-Time Stock Price Tracker</h1>
+    <button onclick="startFetchingData()">Start</button>
+    <canvas id="stockChart"></canvas>
+    <div id="stock-data"></div>
+</body>
+</html>
+
