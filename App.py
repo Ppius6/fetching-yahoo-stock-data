@@ -35,8 +35,16 @@ def consume_messages():
     finally:
         consumer.close()
         
-# Thread to run the Kafka consumer
-threading.Thread(target = consume_messages, daemon = True).start()
+# Start consumer in a background thread
+consumer_thread = threading.Thread(target=consume_messages, daemon=True)
+consumer_thread.start()
+
+@app.route('/stop')
+def stop_consumer():
+    global should_continue
+    should_continue = False
+    consumer_thread.join()  # Wait for the thread to finish
+    return "Consumer stopped"
 
 @app.route('/')
 def index():

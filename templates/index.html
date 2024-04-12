@@ -6,19 +6,31 @@
     <title>Real-Time Stock Price Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body onload="startFetchingData()">
+<body>
     <h1>Real-Time Stock Price Tracker</h1>
+    <button onclick="startFetchingData()">Start Fetching Data</button>
+    <button onclick="stopFetchingData()">Stop Fetching Data</button>
     <canvas id="stockChart"></canvas>
 
     <script>
         var chart = null;
+        var fetchInterval = null; // Global variable to hold the interval ID
 
         function startFetchingData() {
             if (!chart) {
                 initializeChart();
             }
-            fetchAndUpdateStockData();
-            setInterval(fetchAndUpdateStockData, 5000); // Fetch data every 5 seconds
+            if (!fetchInterval) {
+                fetchAndUpdateStockData(); // Fetch immediately
+                fetchInterval = setInterval(fetchAndUpdateStockData, 5000); // Continue fetching every 5 seconds
+            }
+        }
+
+        function stopFetchingData() {
+            if (fetchInterval) {
+                clearInterval(fetchInterval);
+                fetchInterval = null; // Clear the interval ID
+            }
         }
 
         function fetchAndUpdateStockData() {
@@ -91,5 +103,3 @@
     </script>
 </body>
 </html>
-
-
