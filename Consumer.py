@@ -1,5 +1,5 @@
 import json
-from confluent_kafka import Consumer, KafkaException
+from confluent_kafka import Consumer, KafkaError
 
 # Kafka configuration
 conf = {
@@ -16,21 +16,20 @@ consumer.subscribe(['stock_prices'])
 def process_messages():
     try:
         while True:
-            
-            # Poll for new messages
-            message = consumer.poll(timeout = 1.0)
+            message = consumer.poll(timeout=1.0)
             if message is None:
                 continue
             if message.error():
-                if message.error().code() == KafkaException._PARTITION_EOF:
+                if message.error().code() == KafkaError._PARTITION_EOF:
                     # End of partition event
                     print('%% %s [%d] reached end at offset %d\n' %
                           (message.topic(), message.partition(), 
                            message.offset()))
                 elif message.error():
-                    raise KafkaException(message.error())
+                    print('Error: {}'.format(message.error()))
+                    raise KafkaError(message.error())
             else:
-                # Process the message
+                # No error, process the message
                 print('Received message: {}'.format(message.value().decode('utf-8')))
                 
     finally:
@@ -39,4 +38,5 @@ def process_messages():
         
 # Start consuming messages
 process_messages()
+
 

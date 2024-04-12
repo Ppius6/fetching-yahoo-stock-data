@@ -31,9 +31,7 @@ def consume_messages():
             else:
                 stock_data = json.loads(message.value().decode('utf-8'))
                 symbol = stock_data['symbol']
-                if symbol not in latest_stock_data:
-                    latest_stock_data[symbol] = []
-                latest_stock_data[symbol].append(stock_data)
+                latest_stock_data[symbol] = stock_data
     finally:
         consumer.close()
         

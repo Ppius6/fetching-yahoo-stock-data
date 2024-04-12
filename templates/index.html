@@ -2,70 +2,94 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Stock Price Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Stock Price Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body onload="startFetchingData()">
+    <h1>Real-Time Stock Price Tracker</h1>
+    <canvas id="stockChart"></canvas>
+
     <script>
         var chart = null;
-        var fetchInterval = null;
+
+        function startFetchingData() {
+            if (!chart) {
+                initializeChart();
+            }
+            fetchAndUpdateStockData();
+            setInterval(fetchAndUpdateStockData, 5000); // Fetch data every 5 seconds
+        }
 
         function fetchAndUpdateStockData() {
             fetch('/stock-data')
                 .then(response => response.json())
-                .then(data => {
-                    const labels = [];
-                    const prices = [];
-                    const symbol = Object.keys(data)[0]; // Assumes first symbol; adjust as needed
-
-                    for (const entry of data[symbol]) {
-                        labels.push(new Date(entry.date).toLocaleTimeString());
-                        prices.push(entry.price);
-                    }
-                    
-                    if (chart) {
-                        chart.data.labels = labels;
-                        chart.data.datasets[0].data = prices;
-                        chart.update();
-                    } else {
-                        chart = new Chart(document.getElementById('stockChart'), {
-                            type: 'line',
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    label: `${symbol} Stock Price`,
-                                    data: prices,
-                                    borderColor: 'rgb(75, 192, 192)',
-                                    tension: 0.1
-                                }]
-                            },
-                            options: {
-                                scales: {
-                                    x: {
-                                        type: 'time',
-                                        time: {
-                                            unit: 'minute'
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                    }
-                })
+                .then(data => updateChartData(data))
                 .catch(error => console.error('Error fetching stock data:', error));
         }
 
-        function startFetchingData() {
-            if (!fetchInterval) {
-                fetchAndUpdateStockData(); // Initial fetch
-                fetchInterval = setInterval(fetchAndUpdateStockData, 5000);
-            }
+        function initializeChart() {
+            var ctx = document.getElementById('stockChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: []
+                },
+                options: {
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'second'
+                            },
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Time'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Price'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChartData(data) {
+            Object.keys(data).forEach(symbol => {
+                var dataset = chart.data.datasets.find(ds => ds.label === `${symbol} Stock Price`);
+                var stockData = data[symbol];
+                var newPoint = { x: new Date(stockData.date), y: stockData.price };
+
+                if (dataset) {
+                    dataset.data.push(newPoint);
+                    if (dataset.data.length > 20) { // Keep only the latest 20 data points
+                        dataset.data.shift();
+                    }
+                } else {
+                    var newDataset = {
+                        label: `${symbol} Stock Price`,
+                        data: [newPoint],
+                        borderColor: randomColor(),
+                        fill: false,
+                        lineTension: 0.1
+                    };
+                    chart.data.datasets.push(newDataset);
+                }
+            });
+            chart.update();
+        }
+
+        function randomColor() {
+            return `rgb(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)})`;
         }
     </script>
-</head>
-<body>
-    <h1>Real-Time Stock Price Tracker</h1>
-    <button onclick="startFetchingData()">Start</button>
-    <canvas id="stockChart"></canvas>
-    <div id="stock-data"></div>
 </body>
 </html>
+
 
