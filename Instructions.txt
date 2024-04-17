@@ -1,0 +1,17 @@
+Start ZooKeeper:
+zookeeper-server-start.sh $KAFKA_HOME/config/zookeeper.properties
+
+Start the Kafka server:
+kafka-server-start.sh $KAFKA_HOME/config/server.properties
+
+Verify the Installation:
+kafka-topics.sh --list --bootstrap-server localhost:9092
+
+Next, create a Kafka TOpic:
+kafka-topics.sh --create --topic stock_prices --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1
+
+Start Producing to stock_prices:
+kafka-console-producer.sh --broker-list localhost:9092 --topic stock_prices
+
+Consume from stock_prices:
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic stock_prices --from-beginning

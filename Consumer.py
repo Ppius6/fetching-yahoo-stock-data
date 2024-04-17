@@ -14,13 +14,21 @@ consumer.subscribe(['stock_prices'])
 
 # Function to consume and process stock data
 def process_messages():
+    
     try:
+        
         while True:
-            message = consumer.poll(timeout=1.0)
+            
+            message = consumer.poll(timeout = 1.0)
+            
             if message is None:
+                
                 continue
+            
             if message.error():
+                
                 if message.error().code() == KafkaError._PARTITION_EOF:
+                    
                     # End of partition event
                     print('%% %s [%d] reached end at offset %d\n' %
                           (message.topic(), message.partition(), 
@@ -38,5 +46,3 @@ def process_messages():
         
 # Start consuming messages
 process_messages()
-
-
