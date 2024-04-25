@@ -61,32 +61,33 @@ dash_app.layout = html.Div([
     Output('stock-graph', 'figure'),
     [Input('interval-component', 'n_intervals')]
 )
+
 def update_graph(n):
     
-    traces = []
+    bars = []
     
     with lock:
-        # Iterate through each stock symbol in the history dictionary
-        for symbol, data in stock_data_history.items():
-            df = pd.DataFrame(data)
-            if not df.empty:
-                traces.append(go.Scatter(
-                    x = pd.to_datetime(df['date']),  # Ensure date is in datetime format for plotting
-                    y = df['price'],
-                    mode = 'lines+markers',
-                    name = symbol
-                ))
+        # Prepare a list of the latest stock prices
+        latest_prices = [{'symbol': symbol, 'price': data[-1]['price']} for symbol, data in stock_data_history.items() if data]
+        df = pd.DataFrame(latest_prices)
+    
+    if not df.empty:
+        bars = [go.Bar(
+            x=df['symbol'],  # Stock symbols as x
+            y=df['price'],  # Stock prices as y
+            marker=dict(color=df['price'], coloraxis="coloraxis")  # Colors can represent prices
+        )]
 
-    figure = {
-        'data': traces,
-        'layout': {
-            'title': 'Stock Prices Over Time',
-            'xaxis': {'title': 'Date', 'type': 'date'},  # Set x-axis as date type
-            'yaxis': {'title': 'Price ($)'}
-        }
-    }
+    figure = go.Figure(data=bars)
+    figure.update_layout(
+        title='Latest Stock Prices',
+        xaxis=dict(title='Stock'),
+        yaxis=dict(title='Price ($)'),
+        coloraxis=dict(colorscale='Viridis'),  # Using a colorscale for bar colors
+        showlegend=False  # No legend necessary for a bar chart
+    )
+    
     return figure
-
 
 if __name__ == '__main__':
     app.run(debug=True)
